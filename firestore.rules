@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isUnitRange(val) {
+      return val is number && val >= 0 && val <= 1;
+    }
+
+    function isValidCategory(cat) {
+      return cat is string && cat in [
+        'MODERN_METAL',
+        'THRASH',
+        'DEATH_DOOM',
+        'LEAD_SHRED',
+        'CRUNCH_ROCK',
+        'CLEAN_AMBIENT',
+        'TONE_MATCHED',
+        'CUSTOM'
+      ];
+    }
+
+    function isValidMicPos(pos) {
+      return pos is string && pos in ['CAP_CENTER', 'CAP_EDGE', 'OFF_AXIS'];
+    }
+
+    function isValidEqBand(val) {
+      return val is number && val >= -12 && val <= 12;
+    }
+
+    function isValidEqBands(bands) {
+      return bands is list &&
+        bands.size() == 7 &&
+        isValidEqBand(bands[0]) &&
+        isValidEqBand(bands[1]) &&
+        isValidEqBand(bands[2]) &&
+        isValidEqBand(bands[3]) &&
+        isValidEqBand(bands[4]) &&
+        isValidEqBand(bands[5]) &&
+        isValidEqBand(bands[6]);
+    }
+
+    function isValidRigPreset(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 50 &&
+        isValidCategory(data.category) &&
+        data.favorite is bool &&
+        data.ampModelId is string && data.ampModelId.size() >= 1 && data.ampModelId.size() <= 40 &&
+        isUnitRange(data.gain) &&
+        isUnitRange(data.bass) &&
+        isUnitRange(data.mid) &&
+        isUnitRange(data.treble) &&
+        isUnitRange(data.presence) &&
+        isUnitRange(data.depth) &&
+        isUnitRange(data.master) &&
+        data.cabModelId is string && data.cabModelId.size() >= 1 && data.cabModelId.size() <= 40 &&
+        isValidMicPos(data.micPosition) &&
+        isUnitRange(data.cabResonance) &&
+        data.gateOn is bool &&
+        data.gateThresholdDb is number && data.gateThresholdDb >= -80 && data.gateThresholdDb <= -10 &&
+        data.odOn is bool &&
+        isUnitRange(data.odDrive) &&
+        isUnitRange(data.odTone) &&
+        isUnitRange(data.odLevel) &&
+        data.eqOn is bool &&
+        isValidEqBands(data.eqBands) &&
+        data.chorusOn is bool &&
+        isUnitRange(data.chorusMix) &&
+        data.delayOn is bool &&
+        data.delayTimeMs is number && data.delayTimeMs >= 40 && data.delayTimeMs <= 800 &&
+        data.delayFeedback is number && data.delayFeedback >= 0 && data.delayFeedback <= 0.85 &&
+        isUnitRange(data.delayMix) &&
+        data.reverbOn is bool &&
+        isUnitRange(data.reverbDecay) &&
+        isUnitRange(data.reverbMix) &&
+        data.toneMatched is bool &&
+        (!('toneMatchSummary' in data) || (data.toneMatchSummary is string && data.toneMatchSummary.size() <= 200));
+    }
+
+    match /users/{userId}/presets/{presetId} {
+      allow get: if isOwner(userId) && isValidId(presetId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+        isValidId(presetId) &&
+        incoming().userId == userId &&
+        incoming().keys().hasAll([
+          'userId', 'name', 'category', 'favorite', 'ampModelId',
+          'gain', 'bass', 'mid', 'treble', 'presence', 'depth', 'master',
+          'cabModelId', 'micPosition', 'cabResonance',
+          'gateOn', 'gateThresholdDb',
+          'odOn', 'odDrive', 'odTone', 'odLevel',
+          'eqOn', 'eqBands',
+          'chorusOn', 'chorusMix',
+          'delayOn', 'delayTimeMs', 'delayFeedback', 'delayMix',
+          'reverbOn', 'reverbDecay', 'reverbMix',
+          'toneMatched', 'createdAt', 'updatedAt'
+        ]) &&
+        incoming().keys().hasOnly([
+          'userId', 'name', 'category', 'favorite', 'ampModelId',
+          'gain', 'bass', 'mid', 'treble', 'presence', 'depth', 'master',
+          'cabModelId', 'micPosition', 'cabResonance',
+          'gateOn', 'gateThresholdDb',
+          'odOn', 'odDrive', 'odTone', 'odLevel',
+          'eqOn', 'eqBands',
+          'chorusOn', 'chorusMix',
+          'delayOn', 'delayTimeMs', 'delayFeedback', 'delayMix',
+          'reverbOn', 'reverbDecay', 'reverbMix',
+          'toneMatched', 'toneMatchSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+        incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+        isValidRigPreset(incoming());
+
+      allow update: if isOwner(userId) &&
+        isValidId(presetId) &&
+        isValidRigPreset(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'category', 'favorite', 'ampModelId',
+          'gain', 'bass', 'mid', 'treble', 'presence', 'depth', 'master',
+          'cabModelId', 'micPosition', 'cabResonance',
+          'gateOn', 'gateThresholdDb',
+          'odOn', 'odDrive', 'odTone', 'odLevel',
+          'eqOn', 'eqBands',
+          'chorusOn', 'chorusMix',
+          'delayOn', 'delayTimeMs', 'delayFeedback', 'delayMix',
+          'reverbOn', 'reverbDecay', 'reverbMix',
+          'toneMatched', 'toneMatchSummary', 'updatedAt'
+        ]);
+
+      allow delete: if isOwner(userId) && isValidId(presetId);
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "entities": {
+    "RigPreset": {
+      "title": "RigPreset",
+      "description": "A saved guitar amplifier, pedalboard, cabinet IR, and optional tone-match configuration.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID matching the parent user document."
+        },
+        "name": {
+          "type": "string",
+          "description": "User-assigned preset name (1 to 50 characters)."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "MODERN_METAL",
+            "THRASH",
+            "DEATH_DOOM",
+            "LEAD_SHRED",
+            "CRUNCH_ROCK",
+            "CLEAN_AMBIENT",
+            "TONE_MATCHED",
+            "CUSTOM"
+          ],
+          "description": "Preset genre or session category."
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "Whether the preset is starred for quick access."
+        },
+        "ampModelId": {
+          "type": "string",
+          "description": "Selected amplifier topology identifier."
+        },
+        "gain": { "type": "number", "description": "Preamp gain (0.0 to 1.0)." },
+        "bass": { "type": "number", "description": "Tone stack bass (0.0 to 1.0)." },
+        "mid": { "type": "number", "description": "Tone stack mid (0.0 to 1.0)." },
+        "treble": { "type": "number", "description": "Tone stack treble (0.0 to 1.0)." },
+        "presence": { "type": "number", "description": "Power amp presence (0.0 to 1.0)." },
+        "depth": { "type": "number", "description": "Power amp resonance/depth (0.0 to 1.0)." },
+        "master": { "type": "number", "description": "Master output level (0.0 to 1.0)." },
+        "cabModelId": {
+          "type": "string",
+          "description": "Selected cabinet impulse response identifier."
+        },
+        "micPosition": {
+          "type": "string",
+          "enum": ["CAP_CENTER", "CAP_EDGE", "OFF_AXIS"],
+          "description": "Virtual microphone placement on the speaker cone."
+        },
+        "cabResonance": { "type": "number", "description": "Cabinet low-end resonance (0.0 to 1.0)." },
+        "gateOn": { "type": "boolean", "description": "Noise gate active state." },
+        "gateThresholdDb": { "type": "number", "description": "Noise gate threshold in dBFS (-80 to -10)." },
+        "odOn": { "type": "boolean", "description": "Overdrive boost pedal active state." },
+        "odDrive": { "type": "number", "description": "Overdrive pedal drive (0.0 to 1.0)." },
+        "odTone": { "type": "number", "description": "Overdrive pedal tone (0.0 to 1.0)." },
+        "odLevel": { "type": "number", "description": "Overdrive pedal output level (0.0 to 1.0)." },
+        "eqOn": { "type": "boolean", "description": "7-band graphic EQ active state." },
+        "eqBands": {
+          "type": "array",
+          "description": "7 graphic EQ band gains in dB (-12.0 to +12.0)."
+        },
+        "chorusOn": { "type": "boolean", "description": "Chorus pedal active state." },
+        "chorusMix": { "type": "number", "description": "Chorus wet/dry mix (0.0 to 1.0)." },
+        "delayOn": { "type": "boolean", "description": "Echo delay pedal active state." },
+        "delayTimeMs": { "type": "number", "description": "Delay time in milliseconds (40 to 800)." },
+        "delayFeedback": { "type": "number", "description": "Delay feedback (0.0 to 0.85)." },
+        "delayMix": { "type": "number", "description": "Delay wet/dry mix (0.0 to 1.0)." },
+        "reverbOn": { "type": "boolean", "description": "Studio plate reverb active state." },
+        "reverbDecay": { "type": "number", "description": "Reverb decay (0.0 to 1.0)." },
+        "reverbMix": { "type": "number", "description": "Reverb wet/dry mix (0.0 to 1.0)." },
+        "toneMatched": { "type": "boolean", "description": "True if generated from the Tone Matcher." },
+        "toneMatchSummary": {
+          "type": "string",
+          "description": "Optional summary of analyzed spectral and distortion traits."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "category",
+        "favorite",
+        "ampModelId",
+        "gain",
+        "bass",
+        "mid",
+        "treble",
+        "presence",
+        "depth",
+        "master",
+        "cabModelId",
+        "micPosition",
+        "cabResonance",
+        "gateOn",
+        "gateThresholdDb",
+        "odOn",
+        "odDrive",
+        "odTone",
+        "odLevel",
+        "eqOn",
+        "eqBands",
+        "chorusOn",
+        "chorusMix",
+        "delayOn",
+        "delayTimeMs",
+        "delayFeedback",
+        "delayMix",
+        "reverbOn",
+        "reverbDecay",
+        "reverbMix",
+        "toneMatched",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/presets/{presetId}": {
+      "schema": { "$ref": "#/entities/RigPreset" },
+      "description": "User-owned saved guitar rig presets scoped strictly to the authenticated user."
+    }
+  }
+}

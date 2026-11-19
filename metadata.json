@@ -1,0 +1,6 @@
+{
+  "name": "ShredForge",
+  "description": "High-gain guitar amplifier, virtual pedalboard, IR cabinet simulator, tone matcher, and preset studio with USB audio interface support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
